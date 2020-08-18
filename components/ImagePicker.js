@@ -1,15 +1,16 @@
 /** @format */
 
-import React from 'react'
+import React, { useState } from 'react'
 import { View, Button, Text, StyleSheet, Image } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import * as Permissions from 'expo-permissions'
 import Colors from '../constants/Colors'
 
 const ImgPicker = (props) => {
+    const [pickedImage, setPickedImage] = useState()
     const verifyPermissions = async () => {
         //ask user for permission of camera for iphone
-        const result = await Permissions.askAsync(Permissions.CAMERA)
+        const result = await Permissions.askAsync(Permissions.CAMERA_ROLL)
         if (result.status !== 'granted') {
             Alert.alert(
                 'Insufficient permissions!',
@@ -26,14 +27,23 @@ const ImgPicker = (props) => {
         if (!hasPermission) {
             return
         }
-        ImagePicker.launchCameraAsync()
+        const image = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            aspect: [16, 9],
+            quality: 0.5,
+        })
+        setPickedImage(image.uri)
+        props.onImageTaken(image.uri)
     }
 
     return (
         <View style={styles.imagePicker}>
             <View style={styles.imagePreview}>
-                <Text>No image picked yet.</Text>
-                <Image style={styles.image} />
+                {!pickedImage ? (
+                    <Text>No image picked yet.</Text>
+                ) : (
+                    <Image style={styles.image} source={{ uri: pickedImage }} />
+                )}
             </View>
             <Button
                 title='Take Image'
@@ -47,6 +57,7 @@ const ImgPicker = (props) => {
 const styles = StyleSheet.create({
     imagePicker: {
         alignItems: 'center',
+        marginBottom: 15,
     },
     imagePreview: {
         width: '100%',
