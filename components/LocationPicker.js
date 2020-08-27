@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     View,
     Button,
@@ -19,59 +19,88 @@ const LocationPicker = (props) => {
     const [isFetching, setIsFetching] = useState(false)
     const [pickedLocation, setPickedLocation] = useState()
 
+    const mapPickedLocation = props.navigation.getParam('pickedLocation')
+
+    const { onLocationPicked } = props
+
+    useEffect(() => {
+        if (mapPickedLocation) {
+            setPickedLocation(mapPickedLocation)
+            onLocationPicked(mapPickedLocation)
+        }
+    }, [mapPickedLocation, onLocationPicked])
+
     const verifyPermissions = async () => {
-        //ask user for permission of camera for iphone
         const result = await Permissions.askAsync(Permissions.LOCATION)
         if (result.status !== 'granted') {
             Alert.alert(
                 'Insufficient permissions!',
-                'Please grant location permission to add pictures',
+                'You need to grant location permissions to use this app.',
                 [{ text: 'Okay' }]
             )
             return false
         }
         return true
     }
+
     const getLocationHandler = async () => {
-        //Grabs permission for location and retrives via expo-location
         const hasPermission = await verifyPermissions()
         if (!hasPermission) {
             return
         }
+
         try {
             setIsFetching(true)
             const location = await Location.getCurrentPositionAsync({
-                timeout: 10000,
+                timeout: 5000,
             })
-            console.log(location)
-            //Set location information based off return call of getCurrentPositionAsync
             setPickedLocation({
+                lat: location.coords.latitude,
+                lng: location.coords.longitude,
+            })
+            props.onLocationPicked({
                 lat: location.coords.latitude,
                 lng: location.coords.longitude,
             })
         } catch (err) {
             Alert.alert(
-                'Could not fetch location',
+                'Could not fetch location!',
                 'Please try again later or pick a location on the map.',
                 [{ text: 'Okay' }]
             )
         }
         setIsFetching(false)
     }
+
+    const pickOnMapHandler = () => {
+        props.navigation.navigate('Map')
+    }
+
     return (
         <View style={styles.locationPicker}>
-            <MapPreview style={styles.mapPreview} location={pickedLocation}>
+            <MapPreview
+                style={styles.mapPreview}
+                location={pickedLocation}
+                onPress={pickOnMapHandler}
+            >
                 {isFetching ? (
-                    <ActivityIndicator size='large' />
+                    <ActivityIndicator size='large' color={Colors.primary} />
                 ) : (
-                    <Text>No location chosen yet</Text>
+                    <Text>No location chosen yet!</Text>
                 )}
             </MapPreview>
-            <Button
-                title='Get User Location'
-                color={Colors.primary}
-                onPress={getLocationHandler}
-            />
+            <View style={styles.actions}>
+                <Button
+                    title='Get User Location'
+                    color={Colors.primary}
+                    onPress={getLocationHandler}
+                />
+                <Button
+                    title='Pick on Map'
+                    color={Colors.primary}
+                    onPress={pickOnMapHandler}
+                />
+            </View>
         </View>
     )
 }
@@ -86,6 +115,11 @@ const styles = StyleSheet.create({
         height: 150,
         borderColor: '#ccc',
         borderWidth: 1,
+    },
+    actions: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        width: '100%',
     },
 })
 

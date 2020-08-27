@@ -7,14 +7,12 @@ import { useSelector, useDispatch } from 'react-redux'
 
 import HeaderButton from '../components/HeaderButton'
 import PlaceItem from '../components/PlaceItem'
-
-import * as placesActions from '../store/places-action'
+import * as placesActions from '../store/places-actions'
 
 const PlacesListScreen = (props) => {
     const places = useSelector((state) => state.places.places)
     const dispatch = useDispatch()
 
-    //Only called when dispatch is rerendered so only once
     useEffect(() => {
         dispatch(placesActions.loadPlaces())
     }, [dispatch])
@@ -27,7 +25,7 @@ const PlacesListScreen = (props) => {
                 <PlaceItem
                     image={itemData.item.imageUri}
                     title={itemData.item.title}
-                    address={null}
+                    address={itemData.item.address}
                     onSelect={() => {
                         props.navigation.navigate('PlaceDetail', {
                             placeTitle: itemData.item.title,
